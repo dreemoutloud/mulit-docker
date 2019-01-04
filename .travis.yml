@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t heasman/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run heasman/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t heasman/multi-client ./client
+  - docker build -t heasman/multi-nginx ./nginx
+  - docker build -t heasman/multi-server ./server
+  - docker build -t heasman/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push heasman/multi-client
+  - docker push heasman/multi-nginx
+  - docker push heasman/multi-server
+  - docker push heasman/multi-worker
